@@ -9,7 +9,7 @@ import moderationRouter from './api/moderation';
 import rateLimit from 'express-rate-limit';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.PORT || '3000', 10);
 
 // Rate limiting middleware
 const limiter = rateLimit({
@@ -36,11 +36,16 @@ app.use('/api', paymentRouter);
 app.use('/api', verificationRouter);
 app.use('/api', moderationRouter);
 
-// Health check endpoint
-app.get('/health', (req: Request, res: Response) => {
-  res.status(200).send('OK');
+// Root endpoint
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).json({ ok: true, service: 'api', message: 'API is running' });
 });
 
-app.listen(port, () => {
+// Health check endpoint
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+app.listen(port, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
