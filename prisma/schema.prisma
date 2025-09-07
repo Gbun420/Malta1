@@ -1,0 +1,144 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum VerificationStatus {
+  NOT_VERIFIED
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum ListingStatus {
+  PENDING_REVIEW
+  ACTIVE
+  SOLD
+  DELETED
+}
+
+enum DisputeState {
+  PENDING
+  PAID
+  SHIPPED
+  COMPLETED
+  DISPUTED
+  REFUNDED
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  email         String         @unique
+  password_hash String
+  phone_number  String?
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
+  listings      Listing[]
+  messages_sent Message[]      @relation("Sender")
+  messages_received Message[]    @relation("Receiver")
+  transactions_bought Transaction[] @relation("Buyer")
+  transactions_sold Transaction[] @relation("Seller")
+  verification  Verification? 
+  audit_logs    AuditLog[]
+}
+
+model Verification {
+  id            Int                @id @default(autoincrement())
+  user          User               @relation(fields: [user_id], references: [id])
+  user_id       Int                @unique
+  status        VerificationStatus @default(NOT_VERIFIED)
+  document_type String?
+  document_url  String?
+  created_at    DateTime           @default(now())
+  updated_at    DateTime           @updatedAt
+}
+
+model Listing {
+  id            Int           @id @default(autoincrement())
+  seller        User          @relation(fields: [seller_id], references: [id])
+  seller_id     Int
+  title         String
+  description   String?
+  price         Int
+  category      String
+  condition     String?
+  brand         String?
+  model         String?
+  serial_number String?
+  location      String?
+  status        ListingStatus @default(PENDING_REVIEW)
+  created_at    DateTime      @default(now())
+  updated_at    DateTime      @updatedAt
+  media         Media[]
+  messages      Message[]
+  transaction   Transaction? 
+
+  @@index([seller_id])
+  @@index([status])
+  @@index([category])
+  @@index([price])
+  @@index([created_at])
+  @@index([location])
+}
+
+model Media {
+  id         Int       @id @default(autoincrement())
+  listing    Listing   @relation(fields: [listing_id], references: [id])
+  listing_id Int
+  url        String
+  type       MediaType
+  created_at DateTime  @default(now())
+
+  @@index([listing_id])
+}
+
+model Message {
+  id          Int      @id @default(autoincrement())
+  listing     Listing  @relation(fields: [listing_id], references: [id])
+  listing_id  Int
+  sender      User     @relation("Sender", fields: [sender_id], references: [id])
+  sender_id   Int
+  receiver    User     @relation("Receiver", fields: [receiver_id], references: [id])
+  receiver_id Int
+  content     String
+  created_at  DateTime @default(now())
+
+  @@index([listing_id, sender_id, receiver_id])
+}
+
+model Transaction {
+  id         Int          @id @default(autoincrement())
+  listing    Listing      @relation(fields: [listing_id], references: [id])
+  listing_id Int          @unique
+  buyer      User         @relation("Buyer", fields: [buyer_id], references: [id])
+  buyer_id   Int
+  seller     User         @relation("Seller", fields: [seller_id], references: [id])
+  seller_id  Int
+  amount     Int
+  status     DisputeState @default(PENDING)
+  created_at DateTime     @default(now())
+  updated_at DateTime     @updatedAt
+
+  @@index([listing_id])
+  @@index([buyer_id])
+  @@index([seller_id])
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  user       User?    @relation(fields: [user_id], references: [id])
+  user_id    Int?
+  action     String
+  details    Json?
+  created_at DateTime @default(now())
+}

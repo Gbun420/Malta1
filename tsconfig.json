@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    // Target modern Node (18/20) features and smaller output
+    "target": "ES2022",
+    "lib": ["ES2022"],
+
+    // CommonJS is fine for your current runtime; keep this unless switching to ESM
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+
+    // Build output
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "noEmitOnError": true,
+    "incremental": true,
+
+    // Interop & DX
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    // Strictness (keep strict, add a few high-value guards)
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "useUnknownInCatchVariables": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "noUncheckedIndexedAccess": true
+  },
+  "include": ["src"]
+}
